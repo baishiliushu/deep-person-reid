@@ -83,7 +83,30 @@ class ImageSoftmaxEngine(Engine):
             pids = pids.cuda()
 
         outputs = self.model(imgs)
-        loss = self.compute_loss(self.criterion, outputs, pids)
+
+        # 如果模型返回的是 PCB + 全局分支的输出，
+        # 假设 outputs 为 (local_logits, global_logit)
+        if isinstance(outputs, (tuple, list)):
+            # 如果返回的第一个元素还是一个列表（局部分支），则进入该分支
+            if len(outputs) == 2 and isinstance(outputs[0], (list, tuple)):
+                local_logits, global_logit = outputs
+                # 分别计算局部与全局的交叉熵 loss
+                loss_local = sum([self.criterion(l, pids) for l in local_logits]) / len(local_logits)
+                loss_global = self.criterion(global_logit, pids)
+                # 总 loss 可简单相加，或者根据经验加权求和
+                loss = loss_local + loss_global
+
+                # 对于准确率，可以分别计算局部和全局的准确率，然后取平均
+                acc_local = sum([metrics.accuracy(l, pids)[0] for l in local_logits]) / len(local_logits)
+                acc_global = metrics.accuracy(global_logit, pids)[0]
+                acc = (acc_local + acc_global) / 2.0
+            else:
+                # 如果只是一个 logits 列表（例如单纯 PCB），按原方法计算
+                loss = sum([self.criterion(output, pids) for output in outputs]) / len(outputs)
+                acc = sum([metrics.accuracy(output, pids)[0] for output in outputs]) / len(outputs)
+        else:
+            loss = self.criterion(outputs, pids)
+            acc = metrics.accuracy(outputs, pids)[0]
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -91,7 +114,8 @@ class ImageSoftmaxEngine(Engine):
 
         loss_summary = {
             'loss': loss.item(),
-            'acc': metrics.accuracy(outputs, pids)[0].item()
+            'acc': acc.item() if hasattr(acc, 'item') else acc
         }
 
         return loss_summary
+
