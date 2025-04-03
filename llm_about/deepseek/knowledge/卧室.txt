@@ -1,0 +1,41 @@
+床：
+{
+‘task id’: 1,  
+‘type’: “to semantic”  
+‘des border’: 2  
+‘des semantic obj’: 1     
+‘des semantic obj ID’： 0 
+}
+
+桌子：
+{
+‘task id’: 1,  
+‘type’: “to semantic”  
+‘des border’: 2  
+‘des semantic obj’: 2     
+‘des semantic obj ID’： 1
+}
+{
+‘task id’: 1,  
+‘type’: “to semantic”  
+‘des border’: 2  
+‘des semantic obj’: 2     
+‘des semantic obj ID’： 2
+}
+
+床：
+{
+‘task id’: 1,  
+‘type’: “to semantic”  
+‘des border’: 2  
+‘des semantic obj’: 3     
+‘des semantic obj ID’： 0
+}
+
+
+
+
+
+
+
+

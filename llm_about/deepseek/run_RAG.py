@@ -3,13 +3,15 @@ import chromadb
 import os
 from docx import Document
 import PyPDF2
-0
+
 CHROMA_PATH = os.getenv('CHROMA_PATH', 'chroma')
 COLLECTION_NAME = os.getenv('COLLECTION_NAME', 'local-rag')
 TEXT_EMBEDDING_MODEL = os.getenv('TEXT_EMBEDDING_MODEL', 'bge-m3')
 DOCUMENT_DIRECTORY = os.getenv('DOCUMENT_DIRECTORY', './knowledge')
 
-files = [f for f in os.listdir(DOCUMENT_DIRECTORY) if os.path.isfile(os.path.join(DOCUMENT_DIRECTORY, f)) and (f.endswith('.docx') or f.endswith('.pdf'))]
+files = [f for f in os.listdir(DOCUMENT_DIRECTORY) if os.path.isfile(os.path.join(DOCUMENT_DIRECTORY, f)) and (
+            f.endswith('.docx') or f.endswith('.pdf') or f.endswith('.txt'))]
+
 
 def extract_text_from_docx(file_path):
     doc = Document(file_path)
@@ -17,6 +19,7 @@ def extract_text_from_docx(file_path):
     for paragraph in doc.paragraphs:
         text.append(paragraph.text)
     return ' '.join(text)
+
 
 def extract_text_from_pdf(file_path):
     with open(file_path, 'rb') as f:
@@ -26,13 +29,22 @@ def extract_text_from_pdf(file_path):
             text += page.extract_text()
         return text
 
+
+def extract_text_from_txt(file_path):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        return f.read()
+
+
 def extract_text(file_path):
     if file_path.endswith('.docx'):
         return extract_text_from_docx(file_path)
     elif file_path.endswith('.pdf'):
         return extract_text_from_pdf(file_path)
+    elif file_path.endswith('.txt'):
+        return extract_text_from_txt(file_path)
     else:
         raise ValueError("Unsupported file type")
+
 
 documents = {}
 for file in files:
