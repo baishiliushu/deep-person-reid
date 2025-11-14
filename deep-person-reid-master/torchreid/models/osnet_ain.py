@@ -541,7 +541,7 @@ def osnet_ain_x1_0(
         layers=[2, 2, 2],
         channels=[64, 256, 384, 512],
         loss=loss,
-        conv1_IN=True,
+        conv1_IN=True, # True False
         **kwargs
     )
     if pretrained:

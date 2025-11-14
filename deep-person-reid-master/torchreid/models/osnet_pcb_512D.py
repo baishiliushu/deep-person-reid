@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from .osnet_ain import osnet_ain_x1_0  # 可以基于osnet_ain_x1_0修改
 
 
-class OSNetPCB(nn.Module):
+class OSNetPCB512D(nn.Module):
     """
     在 OSNet 的基础上加入 PCB 结构：
       - 将特征图在高度方向分为若干部分（parts）
@@ -13,7 +13,7 @@ class OSNetPCB(nn.Module):
     """
 
     def __init__(self, num_classes, parts=6, pretrained=True, **kwargs):
-        super(OSNetPCB, self).__init__()
+        super(OSNetPCB512D, self).__init__()
         # 这里以 osnet_ain_x1_0 为例作为 backbone，
         # 你也可以根据需要选择其他版本
         self.backbone = osnet_ain_x1_0(num_classes=1000, pretrained=pretrained, **kwargs)
@@ -62,5 +62,5 @@ class OSNetPCB(nn.Module):
 
 # 为了和其他模型一致，提供一个接口函数
 def osnet_pcb_512D(num_classes=1000, pretrained=True, **kwargs):
-    model = OSNetPCB(num_classes=num_classes, parts=6, pretrained=pretrained, **kwargs)
+    model = OSNetPCB512D(num_classes=num_classes, parts=6, pretrained=pretrained, **kwargs)
     return model

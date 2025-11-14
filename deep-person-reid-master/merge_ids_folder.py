@@ -28,16 +28,17 @@ def get_valid_subfolders(directory, output_dir):
     return valid_subfolders
 
 if __name__ == '__main__':
+    base_dir = "/home/leon/mount_point_d/test-result-moved/reid_datas/ljw-dataset/data_ids/"
     directory_paths = [
-        '/home/spring/test_qzj/data/data_ids/our_ids',
-        '/home/spring/test_qzj/data/data_ids/vot19',
-        '/home/spring/test_qzj/data/data_ids/ut_kinect',
-        '/home/spring/test_qzj/data/data_ids/otb2015',
-        '/home/spring/test_qzj/data/data_ids/HIE1',
-        '/home/spring/test_qzj/data/data_ids/HIE2',
-        '/home/spring/test_qzj/data/data_ids/our_ids_20250103'
+        base_dir + 'our_ids_left',
+        base_dir + 'vot19',
+        base_dir + 'ut_kinect',
+        base_dir + 'otb2015',
+        base_dir + 'HIE1',
+        base_dir + 'HIE2',
+        #base_dir + 'prid_as_ours'
     ]
-    output_dir = '/home/spring/test_qzj/data/data_ids/data_all'
+    output_dir = base_dir + 'data_all_6_124'
     id = 0
     for directory in directory_paths:
         valid_subfolders = get_valid_subfolders(directory, output_dir)

@@ -1,10 +1,11 @@
 import os
 import random
+from datetime import datetime
 
 ##输入数据集路径
-directory_path = '/home/spring/test_qzj/data/data20241224/data_all'
+directory_path = '/home/leon/mount_point_d/test-result-moved/reid_datas/ljw-dataset/data_ids/data_all_5_124'
 #输出txt文件路径
-txt_path = '/home/spring/test_qzj/data/data20241224'
+txt_path = '/home/leon/mount_point_d/test-result-moved/reid_datas/ljw-dataset/data_ids/datasets'
 Query_Test_Ratio = 0
 Query_Ratio = 0
 import os

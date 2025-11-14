@@ -3,9 +3,9 @@ import random
 from collections import defaultdict
 
 # 输入文件路径
-input_file = '/home/spring/test_qzj/data/msmt17_2/msmt17/bounding_box_train.txt'
+input_file = '/home/leon/mount_point_d/test-result-moved/reid_datas/ljw-dataset/data_ids/datasets/bounding_box_train.txt'
 # 输出文件夹路径
-output_folder = '/home/spring/test_qzj/data/msmt17_2/msmt17/split'
+output_folder = '/home/leon/mount_point_d/test-result-moved/reid_datas/ljw-dataset/data_ids/datasets'
 os.makedirs(output_folder, exist_ok=True)
 
 # 查询集比例
