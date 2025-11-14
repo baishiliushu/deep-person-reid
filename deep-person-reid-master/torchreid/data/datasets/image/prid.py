@@ -30,7 +30,7 @@ class PRID(ImageDataset):
         self.root = osp.abspath(osp.expanduser(root))
         self.dataset_dir = osp.join(self.root, self.dataset_dir)
         self.download_dataset(self.dataset_dir, self.dataset_url)
-
+        # multi_shot  single_shot
         self.cam_a_dir = osp.join(
             self.dataset_dir, 'prid_2011', 'single_shot', 'cam_a'
         )
@@ -53,7 +53,6 @@ class PRID(ImageDataset):
         split = splits[split_id]
 
         train, query, gallery = self.process_split(split)
-
         super(PRID, self).__init__(train, query, gallery, **kwargs)
 
     def prepare_split(self):

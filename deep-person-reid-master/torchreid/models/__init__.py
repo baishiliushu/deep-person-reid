@@ -21,6 +21,10 @@ from .resnet_ibn_a import *
 from .resnet_ibn_b import *
 from .shufflenetv2 import *
 from .inceptionresnetv2 import *
+from .osnet_pcb import *
+from .osnet_pcb_512D import *
+from .osnet_pcb_512D_ibn import *
+
 __model_factory = {
     # image classification models
     'resnet18': resnet18,
@@ -76,7 +80,11 @@ __model_factory = {
     'osnet_ain_x0_25': osnet_ain_x0_25,
     # new models
     'cbam_resnet50_fc512': cbam_resnet50_fc512,
-    'ca_resnet50_fc512': ca_resnet50_fc512
+    'ca_resnet50_fc512': ca_resnet50_fc512,
+    # ours
+    'osnet_pcb': osnet_pcb,
+    'osnet_pcb_512d': osnet_pcb_512D,
+    'osnet_pcb_512d_ibn': osnet_pcb_512D_Ibn
 }
 
 

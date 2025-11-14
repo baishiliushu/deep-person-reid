@@ -6,8 +6,8 @@ from pathlib import Path
 import torch
 import pandas as pd
 import subprocess
-from torchreid.utils.feature_extractor import FeatureExtractor
-
+#from torchreid.utils.feature_extractor import FeatureExtractor
+from torchreid.utils import FeatureExtractor
 from torchreid.models import build_model
 
 __model_types = [
@@ -15,7 +15,8 @@ __model_types = [
     'osnet_x1_0', 'osnet_x0_75', 'osnet_x0_5', 'osnet_x0_25',
     'osnet_ibn_x1_0', 'osnet_ain_x1_0', # 原生网络
     'se_resnet50_fc512', 'se_resnext50_32x4d', 'se_resnet101', 'se_resnet50', 'cbam_resnet50_fc512',
-    'ca_resnet50_fc512', 'resnet50_ibn_b']
+    'ca_resnet50_fc512', 'resnet50_ibn_b',
+    'osnet_pcb_521d', 'osnet_pcb_521d_ibn']
 def file_size(path):
     # Return file/dir size (MB)
     path = Path(path)
@@ -45,12 +46,13 @@ def export_formats():
     return pd.DataFrame(x, columns=['Format', 'Argument', 'Suffix', 'CPU', 'GPU'])
 
 
-def export_onnx(model, im, file, opset, train=False, dynamic=False, simplify=False):
+def export_onnx(model, im, path, opset, train=False, dynamic=False, simplify=False):
     # ONNX export
+    print("export {} with opset-{}, dynamic {}, simplify {}".format(path, opset, dynamic, simplify))
     try:
         import onnx
 
-        f = file.with_suffix('.onnx')
+        f = path.with_suffix('.onnx')
         print(f'\nStarting export with onnx {onnx.__version__}...')
 
         torch.onnx.export(
@@ -76,7 +78,7 @@ def export_onnx(model, im, file, opset, train=False, dynamic=False, simplify=Fal
         model_onnx = onnx.load(f)  # load onnx model
         onnx.checker.check_model(model_onnx)  # check onnx model
         onnx.save(model_onnx, f)
-
+        f = path.with_suffix('.simonnx')
         # Simplify
         if simplify:
             try:
@@ -160,7 +162,7 @@ if __name__ == "__main__":
         "-p",
         "--weights",
         type=Path,
-        default="/home/spring/test_qzj/project/deep-person-reid-master/base/20250117_cbam_osnet_ibn_x1_0/model/osnet_ibn_x1_0.tar-60",
+        default="/home/leon/work_c_p_p/githubs/deep-person-reid/deep-person-reid-master/log/251029-102110_0.56/osnet_pcb_521d_ibn-softmax-pre_False_ids456/model/osnet_pcb_521d_ibn.tar-60", #"/home/spring/test_qzj/project/deep-person-reid-master/base/20250117_cbam_osnet_ibn_x1_0/model/osnet_ibn_x1_0.tar-60",
         help="Path to weights",
     )
     parser.add_argument(
@@ -198,7 +200,7 @@ if __name__ == "__main__":
     
     im = torch.zeros(1, 3, args.imgsz[0], args.imgsz[1]).to('cpu')  # image size(1,3,640,480) BCHW iDetection
     if onnx:
-        f = export_onnx(extractor.model.eval(), im, args.weights, 12, train=False, dynamic=args.dynamic, simplify=True)  # opset 12
+        f = export_onnx(extractor.model.eval(), im, args.weights, 11, train=False, dynamic=args.dynamic, simplify=True)  # RDK opset 12 -> opset 11; simplify True -> False
     if openvino:
         f = export_openvino(f, dynamic=args.dynamic, half=False)
     if tflite:

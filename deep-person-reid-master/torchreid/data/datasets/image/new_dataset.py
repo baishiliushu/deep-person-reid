@@ -64,7 +64,6 @@ class NewDataset(ImageDataset):
         train = self.process_data_txt(self.train_dir, relabel=True)
         query = self.process_data_txt(self.query_dir, relabel=False)
         gallery = self.process_data_txt(self.gallery_dir, relabel=False)
-
         super(NewDataset, self).__init__(train, query, gallery, **kwargs)
 
     def process_data_txt(self, dir_path, relabel=False):
