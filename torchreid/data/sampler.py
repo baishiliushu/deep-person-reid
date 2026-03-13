@@ -7,9 +7,87 @@ from torch.utils.data.sampler import Sampler, RandomSampler, SequentialSampler
 
 AVAI_SAMPLERS = [
     'RandomIdentitySampler', 'SequentialSampler', 'RandomSampler',
-    'RandomDomainSampler', 'RandomDatasetSampler'
+    'RandomDomainSampler', 'RandomDatasetSampler', 'BalancedRIS'
 ]
 
+
+class BalancedRandomIdentitySampler(Sampler):
+    """Balanced Random Identity Sampler that favors tail classes."""
+
+    def __init__(self, data_source, batch_size, num_instances):
+        if batch_size < num_instances:
+            raise ValueError(
+                f'batch_size({batch_size}) must be >= num_instances({num_instances})'
+            )
+        self.data_source = data_source
+        self.batch_size = batch_size
+        self.num_instances = num_instances
+        self.num_pids_per_batch = batch_size // num_instances
+
+        # Build index dict: pid -> list of indices
+        self.index_dic = defaultdict(list)
+        for idx, items in enumerate(data_source):
+            pid = items[1]
+            self.index_dic[pid].append(idx)
+        self.pids = list(self.index_dic.keys())
+
+        if len(self.pids) < self.num_pids_per_batch:
+            raise ValueError("Too few identities to form a batch.")
+
+        # Compute inverse frequency weights for sampling
+        pid_counts = np.array([len(self.index_dic[pid]) for pid in self.pids], dtype=np.float32)
+        self.pid_weights = 1.0 / (pid_counts + 1e-8)
+        self.pid_weights /= self.pid_weights.sum()  # normalize to probability
+
+        # Estimate epoch length (same logic as original)
+        self.length = 0
+        for pid in self.pids:
+            count = len(self.index_dic[pid])
+            if count < self.num_instances:
+                count = self.num_instances
+            self.length += count - (count % self.num_instances)
+
+    def __iter__(self):
+        batch_idxs_dict = defaultdict(list)
+
+        for pid in self.pids:
+            idxs = copy.deepcopy(self.index_dic[pid])
+            if len(idxs) < self.num_instances:
+                idxs = np.random.choice(idxs, size=self.num_instances, replace=True).tolist()
+            random.shuffle(idxs)
+            # Split into chunks of `num_instances`
+            for i in range(0, len(idxs), self.num_instances):
+                chunk = idxs[i:i + self.num_instances]
+                if len(chunk) == self.num_instances:
+                    batch_idxs_dict[pid].append(chunk)
+
+        avai_pids = [pid for pid in self.pids if batch_idxs_dict[pid]]
+        final_idxs = []
+
+        while len(avai_pids) >= self.num_pids_per_batch:
+            # Get weights for available pids only
+            avail_weights = np.array([
+                self.pid_weights[self.pids.index(pid)] for pid in avai_pids
+            ], dtype=np.float32)
+            avail_weights /= avail_weights.sum()
+
+            selected_pids = np.random.choice(
+                avai_pids,
+                size=self.num_pids_per_batch,
+                replace=False,
+                p=avail_weights
+            ).tolist()
+
+            for pid in selected_pids:
+                batch = batch_idxs_dict[pid].pop(0)
+                final_idxs.extend(batch)
+                if not batch_idxs_dict[pid]:
+                    avai_pids.remove(pid)
+
+        return iter(final_idxs)
+
+    def __len__(self):
+        return self.length
 
 class RandomIdentitySampler(Sampler):
     """Randomly samples N identities each with K instances.
@@ -226,7 +304,8 @@ def build_train_sampler(
     """
     assert train_sampler in AVAI_SAMPLERS, \
         'train_sampler must be one of {}, but got {}'.format(AVAI_SAMPLERS, train_sampler)
-
+    if train_sampler == 'BalancedRIS':
+        sampler = BalancedRandomIdentitySampler(data_source, batch_size, num_instances)
     if train_sampler == 'RandomIdentitySampler':
         sampler = RandomIdentitySampler(data_source, batch_size, num_instances)
 

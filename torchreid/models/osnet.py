@@ -370,6 +370,7 @@ class OSNet(nn.Module):
     def _construct_fc_layer(self, fc_dims, input_dim, dropout_p=None):
         if fc_dims is None or fc_dims < 0:
             self.feature_dim = input_dim
+            print("[Debug]osnet-fc_layer return None.")
             return None
 
         if isinstance(fc_dims, int):
@@ -383,7 +384,7 @@ class OSNet(nn.Module):
             if dropout_p is not None:
                 layers.append(nn.Dropout(p=dropout_p))
             input_dim = dim
-
+        print("[Debug]osnet-fc layers {}".format(layers))
         self.feature_dim = fc_dims[-1]
 
         return nn.Sequential(*layers)
@@ -427,12 +428,15 @@ class OSNet(nn.Module):
         v = v.view(v.size(0), -1)
         if self.fc is not None:
             v = self.fc(v)
+            
         if not self.training:
             return v
         y = self.classifier(v)
         if self.loss == 'softmax':
+            print("[Debug]osnet foward (softmax)")
             return y
         elif self.loss == 'triplet':
+            print("[Debug]osnet foward (triplet)")
             return y, v
         else:
             raise KeyError("Unsupported loss: {}".format(self.loss))
@@ -596,3 +600,18 @@ def osnet_ibn_x1_0(
     if pretrained:
         init_pretrained_weights(model, key='osnet_ibn_x1_0')
     return model
+
+
+# from torch.utils.tensorboard import SummaryWriter
+#
+# # 假设已导入或定义了所有需要的模块和函数
+# model = osnet_x1_0(num_classes=1000, pretrained=False)  # 实例化模型
+# # 创建一个SummaryWriter对象
+# writer = SummaryWriter('log_model/osnet_example')
+# # 创建一个随机张量作为模型的输入（根据你的模型调整尺寸）
+# dummy_input = torch.rand(1, 3, 256, 128)  # 示例输入尺寸
+# # 向TensorBoard添加计算图
+# writer.add_graph(model, dummy_input)
+# # 关闭writer
+# writer.close()
+# print("Model graph has been written to TensorBoard.")

@@ -3,10 +3,11 @@ import math
 from collections import OrderedDict
 import torch.nn as nn
 from torch.utils import model_zoo
-
+from .attention import attention
 __all__ = [
     'senet154', 'se_resnet50', 'se_resnet101', 'se_resnet152',
-    'se_resnext50_32x4d', 'se_resnext101_32x4d', 'se_resnet50_fc512'
+    'se_resnext50_32x4d', 'se_resnext101_32x4d', 'se_resnet50_fc512',
+    'cbam_resnet50_fc512', 'ca_resnet50_fc512',
 ]
 """
 Code imported from https://github.com/Cadene/pretrained-models.pytorch
@@ -656,8 +657,7 @@ def se_resnext50_32x4d(num_classes, loss='softmax', pretrained=True, **kwargs):
         **kwargs
     )
     if pretrained:
-        model_url = pretrained_settings['se_resnext50_32x4d']['imagenet']['url'
-                                                                          ]
+        model_url = pretrained_settings['se_resnext50_32x4d']['imagenet']['url']
         init_pretrained_weights(model, model_url)
     return model
 
@@ -685,4 +685,96 @@ def se_resnext101_32x4d(
         model_url = pretrained_settings['se_resnext101_32x4d']['imagenet'][
             'url']
         init_pretrained_weights(model, model_url)
+    return model
+
+
+
+class CBAMResNetBottleneck(Bottleneck):
+    expansion = 4
+    def __init__(
+        self, inplanes, planes, groups, reduction, stride=1, downsample=None
+    ):
+        super(CBAMResNetBottleneck, self).__init__()
+        self.conv1 = nn.Conv2d(
+            inplanes, planes, kernel_size=1, bias=False, stride=stride
+        )
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(
+            planes,
+            planes,
+            kernel_size=3,
+            padding=1,
+            groups=groups,
+            bias=False
+        )
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(planes * 4)
+        self.relu = nn.ReLU(inplace=True)
+        # self.se_module = SEModule(planes * 4, reduction=reduction)
+        self.se_module = attention.CBAM_block(channel=planes * 4, ratio=reduction)
+        self.downsample = downsample
+        self.stride = stride
+def cbam_resnet50_fc512(num_classes, loss='softmax', pretrained=True, **kwargs):
+    model = SENet(
+        num_classes=num_classes,
+        loss=loss,
+        block=CBAMResNetBottleneck,
+        layers=[3, 4, 6, 3],
+        groups=1,
+        reduction=16,
+        dropout_p=None,
+        inplanes=64,
+        input_3x3=False,
+        downsample_kernel_size=1,
+        downsample_padding=0,
+        last_stride=1,
+        fc_dims=[512],
+        **kwargs
+    )
+    return model
+
+class CAResNetBottleneck(Bottleneck):
+    expansion = 4
+    def __init__(
+        self, inplanes, planes, groups, reduction, stride=1, downsample=None
+    ):
+        super(CAResNetBottleneck, self).__init__()
+        self.conv1 = nn.Conv2d(
+            inplanes, planes, kernel_size=1, bias=False, stride=stride
+        )
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(
+            planes,
+            planes,
+            kernel_size=3,
+            padding=1,
+            groups=groups,
+            bias=False
+        )
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(planes * 4)
+        self.relu = nn.ReLU(inplace=True)
+        # self.se_module = SEModule(planes * 4, reduction=reduction)
+        self.se_module = attention.CoordAtt(inp=planes * 4)
+        self.downsample = downsample
+        self.stride = stride
+def ca_resnet50_fc512(num_classes, loss='softmax', pretrained=True, **kwargs):
+    model = SENet(
+        num_classes=num_classes,
+        loss=loss,
+        block=CAResNetBottleneck,
+        layers=[3, 4, 6, 3],
+        groups=1,
+        reduction=16,
+        dropout_p=None,
+        inplanes=64,
+        input_3x3=False,
+        downsample_kernel_size=1,
+        downsample_padding=0,
+        last_stride=1,
+        fc_dims=[512],
+        **kwargs
+    )
     return model

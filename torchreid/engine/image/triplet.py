@@ -4,7 +4,7 @@ from torchreid import metrics
 from torchreid.losses import TripletLoss, CrossEntropyLoss
 
 from ..engine import Engine
-
+import torch.nn.functional as F
 
 class ImageTripletEngine(Engine):
     r"""Triplet-loss engine for image-reid.
@@ -89,16 +89,19 @@ class ImageTripletEngine(Engine):
             use_gpu=self.use_gpu,
             label_smooth=label_smooth
         )
+        self.L2_normalize = True
+        print("[triplet param]margin {}, wx {}, wt {} ; F: {}".format(margin, self.weight_x, self.weight_t, self.L2_normalize))
 
     def forward_backward(self, data):
         imgs, pids = self.parse_data_for_train(data)
-
+        
         if self.use_gpu:
             imgs = imgs.cuda()
             pids = pids.cuda()
 
         outputs, features = self.model(imgs)
-
+        if self.L2_normalize:
+            features = F.normalize(features, p=2, dim=1)
         loss = 0
         loss_summary = {}
 

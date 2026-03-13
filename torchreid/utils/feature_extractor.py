@@ -65,14 +65,14 @@ class FeatureExtractor(object):
         pixel_std=[0.229, 0.224, 0.225],
         pixel_norm=True,
         device='cuda',
-        verbose=True
+        verbose=True, **kwargs
     ):
         # Build model
         model = build_model(
             model_name,
             num_classes=1,
             pretrained=not (model_path and check_isfile(model_path)),
-            use_gpu=device.startswith('cuda')
+            use_gpu=device.startswith('cuda'), **kwargs
         )
         model.eval()
 
@@ -148,5 +148,5 @@ class FeatureExtractor(object):
 
         with torch.no_grad():
             features = self.model(images)
-
+            #features = F.normalize(features, p=2, dim=1)
         return features

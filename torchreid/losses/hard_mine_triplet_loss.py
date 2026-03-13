@@ -27,6 +27,7 @@ class TripletLoss(nn.Module):
             targets (torch.LongTensor): ground truth labels with shape (num_classes).
         """
         n = inputs.size(0)
+        #print("[Debug]input size {}, targets size {}".format(inputs.size(0), targets.size(0)))
 
         # Compute pairwise distance, replace by the official when merged
         dist = torch.pow(inputs, 2).sum(dim=1, keepdim=True).expand(n, n)

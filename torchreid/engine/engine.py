@@ -233,7 +233,7 @@ class Engine(object):
         data_time = AverageMeter()
 
         self.set_model_mode('train')
-
+        
         self.two_stepped_transfer_learning(
             self.epoch, fixbase_epoch, open_layers
         )
@@ -315,29 +315,34 @@ class Engine(object):
         """
         self.set_model_mode('eval')
         targets = list(self.test_loader.keys())
-
+        rank1 = -0.1
         for name in targets:
             domain = 'source' if name in self.datamanager.sources else 'target'
             print('##### Evaluating {} ({}) #####'.format(name, domain))
             query_loader = self.test_loader[name]['query']
             gallery_loader = self.test_loader[name]['gallery']
-            rank1, mAP = self._evaluate(
-                dataset_name=name,
-                query_loader=query_loader,
-                gallery_loader=gallery_loader,
-                dist_metric=dist_metric,
-                normalize_feature=normalize_feature,
-                visrank=visrank,
-                visrank_topk=visrank_topk,
-                save_dir=save_dir,
-                use_metric_cuhk03=use_metric_cuhk03,
-                ranks=ranks,
-                rerank=rerank
-            )
+            try:
+                rank1, mAP = self._evaluate(
+                    dataset_name=name,
+                    query_loader=query_loader,
+                    gallery_loader=gallery_loader,
+                    dist_metric=dist_metric,
+                    normalize_feature=normalize_feature,
+                    visrank=visrank,
+                    visrank_topk=visrank_topk,
+                    save_dir=save_dir,
+                    use_metric_cuhk03=use_metric_cuhk03,
+                    ranks=ranks,
+                    rerank=rerank
+                )
 
-            if self.writer is not None:
-                self.writer.add_scalar(f'Test/{name}/rank1', rank1, self.epoch)
-                self.writer.add_scalar(f'Test/{name}/mAP', mAP, self.epoch)
+                if self.writer is not None:
+                    self.writer.add_scalar(f'Test/{name}/rank1', rank1, self.epoch)
+                    self.writer.add_scalar(f'Test/{name}/mAP', mAP, self.epoch)
+            except Exception as e:  
+                print(f"[Error]eval run {name} ({domain}): {str(e)}")
+                continue
+                
 
         return rank1
 
