@@ -10,18 +10,19 @@ class OSNetPCB512DIbn(nn.Module):
     推理时始终返回 512 维特征
     """
 
-    def __init__(self, num_classes, parts=4, loss='softmax', pretrained=False, **kwargs):
+    def __init__(self, num_classes=1000, parts=6, loss='softmax', pretrained=False, **kwargs):
         super(OSNetPCB512DIbn, self).__init__()
         # 使用 osnet_ibn_x1_0 作为 backbone
-        self.backbone = osnet_ibn_x1_0(num_classes=1000, pretrained=pretrained, **kwargs)
+        self.backbone = osnet_ibn_x1_0(num_classes, pretrained=pretrained, **kwargs)
         self.parts = parts
         self.num_features = 512
         self.loss = loss
-
+        print("[counts FOR netword]part: {}, features: {}".format(self.parts, self.num_features))
         # 为每个 part 设立独立分类器
         self.classifiers = nn.ModuleList([
             nn.Linear(self.num_features, num_classes) for _ in range(parts)
         ])
+        
 
     def forward(self, x):
         # 提取特征图，尺寸形状为 [B, C, H, W]
@@ -52,10 +53,6 @@ class OSNetPCB512DIbn(nn.Module):
         elif self.loss == 'triplet':
             # Triplet 模式：返回 (logits, 512维特征)
             # 使用平均特征作为 triplet loss 的输入
-            averaged_features = torch.stack(part_features, dim=1).mean(dim=1)  # [B, 512]
-            return logits, averaged_features
-        elif self.loss == 'softmax_triplet':
-            # 联合损失模式：返回 (logits, 512维特征)
             averaged_features = torch.stack(part_features, dim=1).mean(dim=1)  # [B, 512]
             return logits, averaged_features
         else:
